@@ -1,73 +1,61 @@
 #!/usr/bin/env bash
-# Run Cucumber integration tests against real FE + BE servers.
+# Run Cucumber integration tests in an isolated Docker test environment.
+# Starts its own stack (db, redis, backend, sidekiq, frontend) in RAILS_ENV=test,
+# runs tests, then tears everything down.
 #
 # Usage:
-#   bin/cucumber_test              # use default ports
-#   BE_URL=http://localhost:3969 \
-#   FE_URL=http://localhost:3001 \
-#   bin/cucumber_test [cucumber args]
-#
-# Before running, ensure:
-#   Terminal 1: RAILS_ENV=test bundle exec rails server -p 3969
-#   Terminal 2: RAILS_ENV=test bundle exec sidekiq
-#   Terminal 3: cd frontend && npm run dev   (or npm run build + rails server serves it)
-
+#   bin/cucumber_test                     # run all features
+#   bin/cucumber_test features/auth.feature
 set -e
+export COMPOSE_PROJECT_NAME=remitano-interview-test
 
-BE_URL="${BE_URL:-http://localhost:3969}"
-FE_URL="${FE_URL:-http://localhost:3001}"
-PIDS_TO_KILL=()
+COMPOSE="docker compose -f docker-compose.yml -f docker-compose.test.yml"
+BE_URL="http://localhost:3969"
+FE_URL="http://localhost:3001"
+TEST_DB_URL="postgres://postgres:password@localhost:5432/remitano_interview_test"
 
 log()  { echo "==> $*"; }
 fail() { echo "ERROR: $*" >&2; exit 1; }
 
-check_server() {
-  local name=$1 url=$2
-  if curl -sf --max-time 3 "$url" -o /dev/null 2>/dev/null; then
-    log "$name is up at $url"
-    return 0
-  else
-    return 1
-  fi
+wait_for() {
+  local name=$1 url=$2 tries=${3:-20}
+  log "Waiting for $name at $url..."
+  for i in $(seq 1 $tries); do
+    curl -sf --max-time 3 "$url" -o /dev/null 2>/dev/null && return 0
+    sleep 3
+  done
+  fail "$name did not become ready at $url"
 }
 
-# ── Auto-start BE in test mode if not running ─────────────────────────────────
-if ! check_server "Backend" "$BE_URL/api/v1/videos"; then
-  log "Starting Rails backend in test mode on port 3969..."
-  RAILS_ENV=test bundle exec rails db:migrate 2>/dev/null || true
-  RAILS_ENV=test bundle exec rails server -p 3969 -d \
-    --pid tmp/pids/cucumber_be.pid > log/cucumber_be.log 2>&1
-  sleep 4
-  check_server "Backend" "$BE_URL/api/v1/videos" \
-    || fail "Backend failed to start. Check log/cucumber_be.log"
-  PIDS_TO_KILL+=("tmp/pids/cucumber_be.pid")
-fi
+# Tear down any leftover test containers from a previous run
+$COMPOSE down --remove-orphans 2>/dev/null || true
 
-# ── Check Sidekiq (needed for real-time notifications) ────────────────────────
-if ! pgrep -f "sidekiq" > /dev/null 2>&1; then
-  log "Starting Sidekiq in test mode..."
-  RAILS_ENV=test bundle exec sidekiq -d \
-    -P tmp/pids/cucumber_sidekiq.pid \
-    -L log/cucumber_sidekiq.log 2>/dev/null || true
-  sleep 2
-  PIDS_TO_KILL+=("tmp/pids/cucumber_sidekiq.pid")
-fi
+log "Starting test Docker environment..."
+$COMPOSE up -d db redis
+sleep 4
 
-# ── FE must be running (Next.js dev server) ──────────────────────────────────
-check_server "Frontend" "$FE_URL" \
-  || fail "Frontend not running at $FE_URL.\nStart with: cd frontend && npm run dev"
+log "Preparing test database..."
+$COMPOSE run --rm \
+  -e RAILS_ENV=test \
+  -e DATABASE_URL="$TEST_DB_URL" \
+  backend bundle exec rails db:prepare
+
+log "Starting backend, sidekiq, frontend..."
+$COMPOSE up -d backend sidekiq frontend
+
+wait_for "Backend"  "$BE_URL/api/v1/videos" 20
+wait_for "Frontend" "$FE_URL"               60   # Next.js first compile ~2min
 
 log "Running Cucumber tests..."
-RAILS_ENV=test FE_URL="$FE_URL" BE_URL="$BE_URL" bundle exec cucumber "$@"
+set +e
+RAILS_ENV=test \
+  DATABASE_URL="$TEST_DB_URL" \
+  FE_URL="$FE_URL" \
+  bundle exec cucumber "$@"
 EXIT_CODE=$?
+set -e
 
-# ── Cleanup servers we started ───────────────────────────────────────────────
-for pid_file in "${PIDS_TO_KILL[@]}"; do
-  if [ -f "$pid_file" ]; then
-    pid=$(cat "$pid_file")
-    kill "$pid" 2>/dev/null && log "Stopped process $pid ($pid_file)" || true
-    rm -f "$pid_file"
-  fi
-done
+log "Tearing down test Docker environment..."
+$COMPOSE down --remove-orphans
 
 exit $EXIT_CODE

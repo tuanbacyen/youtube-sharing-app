@@ -3,8 +3,9 @@ class Video < ApplicationRecord
 
   validates :youtube_url, presence: true
   validate :youtube_url_format
+  validate :youtube_id_unique
 
-  before_create :set_youtube_id
+  before_validation :set_youtube_id
 
   private
 
@@ -14,6 +15,12 @@ class Video < ApplicationRecord
   end
 
   def set_youtube_id
-    self.youtube_id = YoutubeOembedService.extract_id(youtube_url)
+    self.youtube_id = YoutubeOembedService.extract_id(youtube_url.to_s)
+  end
+
+  def youtube_id_unique
+    return unless youtube_id
+    return unless Video.where(youtube_id: youtube_id).where.not(id: id).exists?
+    errors.add(:youtube_url, "has already been shared")
   end
 end

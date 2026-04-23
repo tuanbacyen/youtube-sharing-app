@@ -1,0 +1,20 @@
+# Test environment overrides — used by bin/cucumber_test.
+# Runs in RAILS_ENV=test with a separate test database.
+# ActionCable uses Redis so WebSocket notifications work across Docker processes.
+services:
+  backend:
+    environment:
+      DATABASE_URL: postgres://postgres:password@db:5432/remitano_interview_test
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: test
+      JWT_SECRET: testsecret
+      FRONTEND_URL: http://localhost:3001
+      ACTION_CABLE_ADAPTER: redis
+
+  sidekiq:
+    environment:
+      DATABASE_URL: postgres://postgres:password@db:5432/remitano_interview_test
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: test
+      JWT_SECRET: testsecret
+      ACTION_CABLE_ADAPTER: redis
