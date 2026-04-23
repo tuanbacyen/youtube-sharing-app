@@ -3,6 +3,7 @@ import client from '../api/client'
 
 export function useAuth() {
   const [user, setUser] = useState(() => {
+    if (typeof window === 'undefined') return null
     const token = localStorage.getItem('token')
     const email = localStorage.getItem('email')
     return token && email ? { token, email } : null
