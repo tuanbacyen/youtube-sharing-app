@@ -4,5 +4,6 @@ module V1
 
     helpers V1::Helpers::AuthHelpers
     mount V1::Auth
+    mount V1::Videos
   end
 end
