@@ -7,9 +7,13 @@ class VideoShareNotificationJob < ApplicationJob
     ActionCable.server.broadcast(
       'notifications',
       {
-        type: 'new_video',
-        title: video.title,
-        shared_by: video.user&.email
+        type:        'new_video',
+        id:          video.id,
+        title:       video.title,
+        description: video.description,
+        youtube_id:  video.youtube_id,
+        youtube_url: video.youtube_url,
+        shared_by:   video.user&.email
       }
     )
   end

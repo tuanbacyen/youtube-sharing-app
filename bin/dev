@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 # Start all Docker services and run migrations (create DB only if it doesn't exist).
+# Usage: bin/dev              → foreground, shows logs
+#        bin/dev --background → detached, no logs
 set -e
 export COMPOSE_PROJECT_NAME=remitano-interview-dev
+
+BACKGROUND=false
+for arg in "$@"; do
+  [[ "$arg" == "--background" ]] && BACKGROUND=true
+done
 
 echo "==> Starting db and redis..."
 docker compose up -d db redis
@@ -9,8 +16,12 @@ echo "==> Waiting for database to be healthy..."
 sleep 4
 
 echo "==> Running migrations..."
-# db:prepare = create if not exists, then migrate. Safe to run every time.
 docker compose run --rm backend bundle exec rails db:prepare
 
 echo "==> Starting all services..."
-docker compose up
+if $BACKGROUND; then
+  docker compose up -d
+  echo "==> All services running in background. Use 'docker compose -p remitano-interview-dev logs -f' to tail logs."
+else
+  docker compose up
+fi
