@@ -26,6 +26,7 @@ module V1
         user = User.find_by(email: params[:email].to_s.downcase)
         if user&.authenticate(params[:password])
           token = JwtService.encode(user_id: user.id)
+          status :ok
           { token: token, email: user.email }
         else
           error!({ error: "Invalid email or password" }, 401)
@@ -37,6 +38,7 @@ module V1
         authenticate!
         payload = current_token_payload
         JwtDenylist.create!(jti: payload["jti"], exp: Time.at(payload["exp"]))
+        status :ok
         { message: "Logged out successfully" }
       end
     end
