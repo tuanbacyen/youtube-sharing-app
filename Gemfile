@@ -54,7 +54,7 @@ group :test do
   gem 'cucumber'
   gem 'database_cleaner-active_record'              # Clean test database
   # Kafka testing without server
-  gem 'pg_query', '~> 6.1.0'                      # Query analysis
+  gem 'pg_query', '~> 6.2.2'                      # Query analysis
   gem 'prosopite'                     # N+1 query detection
   gem 'webmock' # HTTP request stubbing
 end
