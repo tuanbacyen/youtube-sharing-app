@@ -2,9 +2,14 @@ class VideoShareNotificationJob < ApplicationJob
   queue_as :default
 
   def perform(video_id)
-    video = Video.find_by(id: video_id)
-    return unless video
-
-    # TODO: broadcast notification to ActionCable subscribers
+    video = Video.includes(:user).find(video_id)
+    ActionCable.server.broadcast(
+      'notifications',
+      {
+        type: 'new_video',
+        title: video.title,
+        shared_by: video.user.email
+      }
+    )
   end
 end
