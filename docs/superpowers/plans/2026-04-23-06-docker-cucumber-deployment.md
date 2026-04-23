@@ -4,7 +4,18 @@
 
 **Goal:** Add Docker Compose for local dev, Cucumber integration tests for full-stack flows, Heroku deployment config, and a complete README.
 
-**Architecture:** Docker Compose runs 5 services (db, redis, backend, sidekiq, frontend). The `backend` and `sidekiq` services build from the repo root (`.`) where Rails lives. Cucumber tests use Capybara + headless Chrome against the built React SPA served by Rails from `public/`. A `bin/build` script builds the frontend and copies it to `public/` for both Heroku and Cucumber.
+**Architecture:** Docker Compose runs 5 services (db, redis, backend, sidekiq, frontend). The `backend` and `sidekiq` services build from the repo root (`.`) where Rails lives. The `frontend` service builds from `./frontend/` (subfolder inside the Rails root). Cucumber tests use Capybara + headless Chrome against the built React SPA served by Rails from `public/`. A `bin/build` script builds the frontend (`frontend/dist/`) and copies it to `public/` for both Heroku and Cucumber.
+
+> **Directory layout reminder:**
+> ```
+> remitano-2/          ← repo root = Rails root
+> ├── Dockerfile       ← builds Rails app (excludes frontend/ via .dockerignore)
+> ├── frontend/        ← React + Vite (has its own Dockerfile)
+> │   ├── dist/        ← Vite build output
+> │   └── Dockerfile
+> ├── public/          ← where frontend/dist/ is copied for Rails to serve
+> └── docker-compose.yml
+> ```
 
 **Tech Stack:** Docker, Docker Compose, Cucumber-Rails, Capybara, Selenium WebDriver (headless Chrome), Heroku
 
@@ -420,11 +431,14 @@ end
 
 - [ ] **Step 10: Build frontend (Cucumber hits the built SPA served by Rails)**
 
+Run from repo root:
 ```bash
-cd frontend && npm run build && cp -r dist/. ../public/
+cd frontend && npm run build
+cd ..
+cp -r frontend/dist/. public/
 ```
 
-Expected: `public/index.html` and `public/assets/` present
+Expected: `public/index.html` and `public/assets/` present at repo root
 
 - [ ] **Step 11: Run Cucumber tests**
 
