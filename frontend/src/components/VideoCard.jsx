@@ -7,7 +7,9 @@ export default function VideoCard({ video }) {
           title={video.title} frameBorder="0" allowFullScreen />
       </div>
       <div style={styles.info}>
-        <h3 style={styles.title}>{video.title}</h3>
+        <h3 style={styles.title}>
+          <a href={video.youtube_url} target="_blank" rel="noreferrer" style={styles.link}>{video.title}</a>
+        </h3>
         <p style={styles.meta}>Shared by: {video.shared_by}</p>
         {video.description && (
           <>
@@ -25,6 +27,7 @@ const styles = {
   embed: { flexShrink: 0 },
   info: { flex: 1 },
   title: { color: '#cc0000', marginBottom: '6px', fontSize: '18px' },
+  link: { color: 'inherit', textDecoration: 'none' },
   meta: { fontSize: '14px', marginBottom: '8px', color: '#555' },
   label: { fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' },
   desc: { fontSize: '14px', color: '#666', lineHeight: '1.5' }
