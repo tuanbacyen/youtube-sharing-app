@@ -1,2 +1,14 @@
-#!/usr/bin/env ruby
-exec "./bin/rails", "server", *ARGV
+#!/usr/bin/env bash
+# Start all Docker services (db, redis, backend, sidekiq, frontend) and run migrations.
+set -e
+
+echo "==> Starting services..."
+docker compose up -d db redis
+echo "==> Waiting for database..."
+sleep 4
+
+echo "==> Running migrations..."
+docker compose run --rm backend bundle exec rails db:create db:migrate 2>/dev/null || true
+
+echo "==> Starting remaining services..."
+docker compose up

@@ -3,135 +3,150 @@
 ## Introduction
 
 A fullstack web app for sharing YouTube videos with real-time notifications.
-Built with Ruby on Rails 8 (Grape API + ActionCable + Sidekiq) and React + Vite.
 
-**Features:** User registration/login · Share YouTube videos · Real-time notifications via WebSocket
+| Layer | Stack |
+|---|---|
+| Backend (BE) | Ruby on Rails 8 · Grape API · ActionCable · Sidekiq |
+| Frontend (FE) | Next.js (separate service) |
+| Queue | Sidekiq + Redis |
+| Database | PostgreSQL |
 
-## Prerequisites
+**Features:** User registration/login · Share YouTube videos · Real-time WebSocket notifications
 
-- Ruby 3.2.2 · Node.js 20 · PostgreSQL 16 · Redis 7
-- Chrome (for Cucumber integration tests)
-- Docker + Docker Compose (optional)
+---
 
-## Installation & Configuration
+## Quick Start (Docker)
 
 ```bash
-git clone <repo-url> && cd remitano-2
-cp .env.example .env
-# Edit .env: set JWT_SECRET and RAILS_MASTER_KEY
+bin/install    # build Docker images
+bin/dev        # start all services + run migrations
 ```
 
-## Database Setup
+Open http://localhost:3001 (FE) · http://localhost:3969 (BE API)
+
+---
+
+## All Commands
+
+| Command | Description |
+|---|---|
+| `bin/install` | Build Docker images (first-time setup) |
+| `bin/dev` | Start all services in Docker (db, redis, BE, worker, FE) + migrate |
+| `bin/unit_test` | Run RSpec unit/request tests inside Docker |
+| `bin/cucumber_test` | Run Cucumber integration tests against running FE + BE |
+
+---
+
+## Manual Setup (without Docker)
 
 ```bash
+# Dependencies
 bundle install
+cd frontend && npm install && cd ..
+
+# Database
 bundle exec rails db:create db:migrate
+
+# Start services (4 terminals)
+RAILS_ENV=development bundle exec rails server -p 3969   # BE
+RAILS_ENV=development bundle exec sidekiq                # Worker
+cd frontend && npm run dev                               # FE (port 3001)
 ```
 
-## Running the Application
-
-### Without Docker
-
-```bash
-# Terminal 1 — Rails backend (port 3969)
-bundle exec rails server -p 3969
-
-# Terminal 2 — Sidekiq worker
-bundle exec sidekiq
-
-# Terminal 3 — Vite dev server (port 3001)
-cd frontend && npm install && npm run dev
-```
-
-Open http://localhost:3001
-
-### With Docker
-
-```bash
-docker compose up --build
-docker compose exec backend bundle exec rails db:create db:migrate
-```
-
-Open http://localhost:3001
+---
 
 ## Running Tests
 
-### Unit + Request tests (RSpec)
+### Unit tests (RSpec)
 
 ```bash
+bin/unit_test              # via Docker (recommended)
+# or locally:
 bundle exec rspec
 ```
 
 ### Integration tests (Cucumber)
 
-```bash
-# Option A — let the script manage servers automatically
-bin/run_cucumber_tests
+Requires BE (port 3969) + FE (port 3001) + Sidekiq to be running.
 
-# Option B — bring up servers yourself, then run
-# Terminal 1: RAILS_ENV=test bundle exec rails server -p 3969
-# Terminal 2: RAILS_ENV=test bundle exec sidekiq
-# Terminal 3: cd frontend && npm run dev
+```bash
+bin/cucumber_test
+# or manually:
 RAILS_ENV=test FE_URL=http://localhost:3001 bundle exec cucumber
 ```
 
-Screenshots of failing scenarios are saved to `tmp/screenshots/`.
+Screenshots of failing scenarios → `tmp/screenshots/`
 
-## Deployment (Railway / Heroku)
+---
 
-```bash
-# Build frontend into public/ first
-./bin/build
+## Deployment (Railway)
 
-# Push to Railway
-railway up
+Two separate Railway services:
 
-# Or push to Heroku
-git push heroku main
+### Backend service
+```
+Start command: bundle exec puma -C config/puma.rb
 ```
 
-Required ENV vars:
-| Variable | Description |
+| ENV var | Description |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection URL |
-| `REDIS_URL` | Redis connection URL |
+| `DATABASE_URL` | Set by Railway PostgreSQL add-on |
+| `REDIS_URL` | Set by Railway Redis add-on |
 | `JWT_SECRET` | Random secret string |
 | `RAILS_MASTER_KEY` | Contents of `config/master.key` |
-| `RAILS_SERVE_STATIC_FILES` | Set to `1` for Rails to serve the React SPA |
-| `FRONTEND_URL` | FE origin for CORS (e.g. `https://myapp.railway.app`) |
+| `FRONTEND_URL` | FE Railway URL (for CORS) |
 
-## Usage
+### Worker service (same Docker image as BE)
+```
+Start command: bundle exec sidekiq
+```
 
-1. Enter email + password in the navbar → click **Login / Register** (auto-registers if new)
-2. Click **Share a movie** → paste a YouTube URL → click **Share**
-3. Other logged-in users will see a real-time notification banner (top-right)
-4. The video list updates automatically for all users
+| ENV var | Description |
+|---|---|
+| `DATABASE_URL` | Same as BE |
+| `REDIS_URL` | Same as BE |
+| `JWT_SECRET` | Same as BE |
+| `RAILS_MASTER_KEY` | Same as BE |
+
+### Frontend service (Next.js)
+```
+Start command: npm start
+Build command: npm run build
+```
+
+| ENV var | Description |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | BE Railway URL (e.g. `https://myapp-be.up.railway.app`) |
+| `NEXT_PUBLIC_WS_URL` | WebSocket URL (e.g. `wss://myapp-be.up.railway.app/cable`) |
+
+---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│  Browser                                            │
-│  React + Vite (port 3001)                           │
-│  ├── /api/*  ──proxy──► Rails Grape API (port 3969) │
-│  └── /cable  ──ws───►  ActionCable (port 3969)      │
-└─────────────────────────────────────────────────────┘
-                    │
-            ┌───────┴────────┐
-            ▼                ▼
-       PostgreSQL          Redis
-                             │
-                         Sidekiq
-                    (broadcast jobs)
+Browser
+  └── Next.js FE (port 3001 / Railway)
+        ├── REST  → Rails BE (port 3969 / Railway)  → PostgreSQL
+        └── WS    → ActionCable (Rails BE)
+                        └── Sidekiq ← Redis
 ```
+
+---
+
+## Usage
+
+1. Enter email + password → click **Login / Register** (auto-registers if new)
+2. Click **Share a movie** → paste a YouTube URL → click **Share**
+3. Other logged-in users see a real-time notification banner (top-right)
+
+---
 
 ## Troubleshooting
 
 | Problem | Solution |
 |---|---|
-| Database connection error | Ensure PostgreSQL is running, check `DATABASE_URL` |
-| Redis connection error | Ensure Redis is running, check `REDIS_URL` |
-| No real-time notifications | Check Sidekiq is running, check `REDIS_URL` |
-| WebSocket not connecting | Check `JWT_SECRET` env var, restart Rails |
-| Cucumber tests fail | Run `./bin/build` then `bin/run_cucumber_tests` |
-| "Could not fetch YouTube video info" | URL must be `youtube.com/watch?v=` or `youtu.be/` format |
+| Database connection error | Check `DATABASE_URL`, ensure PostgreSQL is running |
+| Redis / WebSocket error | Check `REDIS_URL`, ensure Redis + Sidekiq are running |
+| No real-time notifications | Sidekiq not running or `REDIS_URL` wrong |
+| CORS errors on FE | Set `FRONTEND_URL` on BE to match FE origin |
+| Cucumber tests fail | Ensure BE + FE + Sidekiq are running, then `bin/cucumber_test` |
