@@ -2,10 +2,10 @@
 # Run Cucumber integration tests against real FE + BE servers.
 #
 # Usage:
-#   bin/run_cucumber_tests              # use default ports
+#   bin/cucumber_test              # use default ports
 #   BE_URL=http://localhost:3969 \
 #   FE_URL=http://localhost:3001 \
-#   bin/run_cucumber_tests [cucumber args]
+#   bin/cucumber_test [cucumber args]
 #
 # Before running, ensure:
 #   Terminal 1: RAILS_ENV=test bundle exec rails server -p 3969
@@ -53,11 +53,10 @@ if ! pgrep -f "sidekiq" > /dev/null 2>&1; then
   PIDS_TO_KILL+=("tmp/pids/cucumber_sidekiq.pid")
 fi
 
-# ── FE must be running (Vite dev server) ─────────────────────────────────────
+# ── FE must be running (Next.js dev server) ──────────────────────────────────
 check_server "Frontend" "$FE_URL" \
   || fail "Frontend not running at $FE_URL.\nStart with: cd frontend && npm run dev"
 
-# ── Build frontend into public/ for cucumber (SPA is served via proxy) ────────
 log "Running Cucumber tests..."
 RAILS_ENV=test FE_URL="$FE_URL" BE_URL="$BE_URL" bundle exec cucumber "$@"
 EXIT_CODE=$?

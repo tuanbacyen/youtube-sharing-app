@@ -9,7 +9,7 @@
 Railway
   ├── be-service      → Rails API (Puma) — DATABASE_URL, REDIS_URL
   ├── worker-service  → Sidekiq          — DATABASE_URL, REDIS_URL
-  └── fe-service      → Next.js          — NEXT_PUBLIC_API_URL, NEXT_PUBLIC_WS_URL
+  └── fe-service      → Next.js          — NEXT_PUBLIC_API_URL
 
 Local Docker
   ├── backend   (port 3969)
@@ -76,8 +76,10 @@ module.exports = nextConfig
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3969
-NEXT_PUBLIC_WS_URL=ws://localhost:3969
 ```
+
+Only **one** env var needed. The WebSocket URL is derived automatically:
+`http://…` → `ws://…` and `https://…` → `wss://…`
 
 Add to `frontend/.gitignore` (already there from Next.js scaffold): `.env.local`
 
@@ -129,11 +131,12 @@ export default client
 - [ ] **Step 2: Copy hooks (useAuth, useActionCable)**
 
 Copy `useAuth.js` and `useActionCable.js` from the old `frontend/src/hooks/` verbatim.
-Update `useActionCable.js` to use `NEXT_PUBLIC_WS_URL` for the WebSocket URL:
+Update `useActionCable.js` to derive the WebSocket URL from `NEXT_PUBLIC_API_URL`:
 
 ```js
-// In useActionCable.js — replace the createConsumer line:
-const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3969'
+// Derive ws(s):// from http(s):// — no separate WS env var needed.
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3969'
+const wsUrl  = apiUrl.replace(/^http/, 'ws')
 consumerRef.current = createConsumer(`${wsUrl}/cable?token=${token}`)
 ```
 
@@ -284,7 +287,6 @@ For development, override `CMD` in docker-compose.
       - '3001:3001'
     environment:
       NEXT_PUBLIC_API_URL: http://backend:3969
-      NEXT_PUBLIC_WS_URL: ws://backend:3969
     depends_on:
       - backend
 ```
@@ -387,7 +389,7 @@ Expected: 6/6 scenarios pass. If any fail, screenshot is in `tmp/screenshots/`.
 
 Common issues:
 - Next.js SSR: initial HTML may differ from React SPA (check selectors)
-- ActionCable URL: uses `NEXT_PUBLIC_WS_URL` env var (set for test env)
+- ActionCable URL: derived from `NEXT_PUBLIC_API_URL` by replacing `http` → `ws`
 
 - [ ] **Step 3: Commit**
 
@@ -414,6 +416,5 @@ git add . && git commit -m "feat: verify and fix Cucumber tests against Next.js 
 
 | Var | Required | Notes |
 |---|---|---|
-| `NEXT_PUBLIC_API_URL` | ✅ | BE Railway URL, e.g. `https://myapp-be.up.railway.app` |
-| `NEXT_PUBLIC_WS_URL` | ✅ | WS BE URL, e.g. `wss://myapp-be.up.railway.app` |
+| `NEXT_PUBLIC_API_URL` | ✅ | BE Railway URL, e.g. `https://myapp-be.up.railway.app` (WS URL derived automatically: `https://…` → `wss://…`) |
 | `PORT` | auto | Railway sets this (Next.js respects it) |

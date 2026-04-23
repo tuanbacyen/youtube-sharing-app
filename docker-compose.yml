@@ -32,7 +32,6 @@ services:
     command: bundle exec puma -C config/puma.rb
     volumes:
       - .:/app
-      - /app/frontend
     ports:
       - '3969:3969'
     environment:
@@ -52,7 +51,6 @@ services:
     command: bundle exec sidekiq
     volumes:
       - .:/app
-      - /app/frontend
     environment:
       DATABASE_URL: postgres://postgres:password@db:5432/remitano_development
       REDIS_URL: redis://redis:6379/0
@@ -66,14 +64,16 @@ services:
 
   frontend:
     build: ./frontend
+    command: npm run dev
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - /app/.next
     ports:
       - '3001:3001'
     environment:
-      VITE_BACKEND_URL: http://backend:3969
-      VITE_WS_URL: ws://backend:3969
+      NEXT_PUBLIC_API_URL: http://backend:3969
+      PORT: 3001
     depends_on:
       - backend
 
