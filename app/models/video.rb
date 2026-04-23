@@ -10,7 +10,7 @@ class Video < ApplicationRecord
 
   def youtube_url_format
     return if YoutubeOembedService.extract_id(youtube_url.to_s)
-    errors.add(:youtube_url, 'is not a valid YouTube URL')
+    errors.add(:youtube_url, "is not a valid YouTube URL")
   end
 
   def set_youtube_id
