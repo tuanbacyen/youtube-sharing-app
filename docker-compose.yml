@@ -34,12 +34,12 @@ services:
       - .:/app
       - /app/frontend
     ports:
-      - '3000:3000'
+      - '3969:3969'
     environment:
       DATABASE_URL: postgres://postgres:password@db:5432/remitano_development
       REDIS_URL: redis://redis:6379/0
       RAILS_ENV: development
-      FRONTEND_URL: http://localhost:5173
+      FRONTEND_URL: http://localhost:3001
       JWT_SECRET: ${JWT_SECRET:-devsecret}
     depends_on:
       db:
@@ -70,7 +70,10 @@ services:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - '5173:5173'
+      - '3001:3001'
+    environment:
+      VITE_BACKEND_URL: http://backend:3969
+      VITE_WS_URL: ws://backend:3969
     depends_on:
       - backend
 
