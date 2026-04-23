@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# Start all Docker services (db, redis, backend, sidekiq, frontend) and run migrations.
+# Start all Docker services and run migrations (create DB only if it doesn't exist).
 set -e
 
-echo "==> Starting services..."
+echo "==> Starting db and redis..."
 docker compose up -d db redis
-echo "==> Waiting for database..."
+echo "==> Waiting for database to be healthy..."
 sleep 4
 
 echo "==> Running migrations..."
-docker compose run --rm backend bundle exec rails db:create db:migrate 2>/dev/null || true
+# db:prepare = create if not exists, then migrate. Safe to run every time.
+docker compose run --rm backend bundle exec rails db:prepare
 
-echo "==> Starting remaining services..."
+echo "==> Starting all services..."
 docker compose up
