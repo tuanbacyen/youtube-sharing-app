@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -e
+
+echo "==> Building frontend..."
+cd frontend
+npm install
+npm run build
+cd ..
+
+echo "==> Copying build to public/..."
+rm -rf public/assets public/index.html
+cp -r frontend/dist/. public/
+
+echo "==> Done."
+echo "Deploy: git push heroku main  |  or: railway up"
+echo "Required ENV vars: DATABASE_URL, REDIS_URL, JWT_SECRET, RAILS_MASTER_KEY, RAILS_SERVE_STATIC_FILES=1"
