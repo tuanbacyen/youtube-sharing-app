@@ -1,16 +1,21 @@
 #!/usr/bin/env bash
-# Run RSpec unit/request tests inside Docker (test environment).
-# Starts the test database if it is not already running.
+# Run RSpec unit/request tests inside Docker using RAILS_ENV=test.
+# Starts db + redis if not running, then prepares the test database.
 set -e
 
 # Ensure db and redis are up
-if ! docker compose ps db | grep -q "running\|healthy"; then
-  echo "==> Starting db and redis for tests..."
+if ! docker compose ps db 2>/dev/null | grep -q "running\|healthy"; then
+  echo "==> Starting db and redis..."
   docker compose up -d db redis
   sleep 4
 fi
 
-echo "==> Running RSpec..."
+echo "==> Preparing test database..."
+docker compose run --rm \
+  -e RAILS_ENV=test \
+  backend bundle exec rails db:prepare
+
+echo "==> Running RSpec (RAILS_ENV=test)..."
 docker compose run --rm \
   -e RAILS_ENV=test \
   backend bundle exec rspec "$@"
