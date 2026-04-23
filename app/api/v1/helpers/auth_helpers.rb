@@ -2,7 +2,7 @@ module V1
   module Helpers
     module AuthHelpers
       def authenticate!
-        error!(error: "Unauthorized", status: 401) unless current_user
+        error!({ error: "Unauthorized" }, 401) unless current_user
       end
 
       def current_user

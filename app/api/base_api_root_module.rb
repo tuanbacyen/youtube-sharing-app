@@ -5,8 +5,6 @@ module BaseApiRootModule
     base.class_eval do
       prefix "api"
       format :json
-      content_type :csv, "text/csv"
-      formatter :json, Grape::Formatter::ActiveModelSerializers
 
       rescue_from ActiveRecord::RecordNotFound do |e|
         class_name = e.message.match(/^Couldn't find (.*) with?/).try(:[], 1)
