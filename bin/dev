@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Start all Docker services and run migrations (create DB only if it doesn't exist).
 set -e
+export COMPOSE_PROJECT_NAME=remitano-interview-dev
 
 echo "==> Starting db and redis..."
 docker compose up -d db redis

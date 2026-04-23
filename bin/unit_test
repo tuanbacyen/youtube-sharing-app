@@ -2,6 +2,7 @@
 # Run RSpec unit/request tests inside Docker using RAILS_ENV=test.
 # Starts db + redis if not running, then prepares the test database.
 set -e
+export COMPOSE_PROJECT_NAME=remitano-interview-test
 
 # Ensure db and redis are up
 if ! docker compose ps db 2>/dev/null | grep -q "running\|healthy"; then

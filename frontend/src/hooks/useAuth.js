@@ -1,13 +1,16 @@
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import client from '../api/client'
 
 export function useAuth() {
-  const [user, setUser] = useState(() => {
-    if (typeof window === 'undefined') return null
+  // Start null on both server and client so SSR HTML matches hydration.
+  // Read localStorage only after mount to avoid the hydration mismatch.
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
     const token = localStorage.getItem('token')
     const email = localStorage.getItem('email')
-    return token && email ? { token, email } : null
-  })
+    if (token && email) setUser({ token, email })
+  }, [])
 
   const login = useCallback(async (email, password) => {
     const res = await client.post('/auth/login', { email, password })
