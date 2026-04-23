@@ -19,4 +19,9 @@ RSpec.describe VideoShareNotificationJob, type: :job do
   it 'is queued on the default queue' do
     expect(described_class.queue_name).to eq('default')
   end
+
+  it 'does nothing when video is not found' do
+    expect(ActionCable.server).not_to receive(:broadcast)
+    described_class.perform_now(0)
+  end
 end

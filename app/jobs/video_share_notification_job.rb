@@ -1,5 +1,6 @@
 class VideoShareNotificationJob < ApplicationJob
   queue_as :default
+  discard_on ActiveRecord::RecordNotFound
 
   def perform(video_id)
     video = Video.includes(:user).find(video_id)
@@ -8,7 +9,7 @@ class VideoShareNotificationJob < ApplicationJob
       {
         type: 'new_video',
         title: video.title,
-        shared_by: video.user.email
+        shared_by: video.user&.email
       }
     )
   end
