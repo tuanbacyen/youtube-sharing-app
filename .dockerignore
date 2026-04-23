@@ -7,8 +7,9 @@
 # Ignore bundler config.
 /.bundle
 
-# Ignore all environment files.
-/.env*
+# Ignore all environment files (keep .env.example).
+/.env
+/.env.*
 
 # Ignore all default key files.
 /config/master.key
@@ -40,6 +41,11 @@
 # Ignore development files
 /.devcontainer
 
-# Ignore Docker-related files
-/.dockerignore
-/Dockerfile*
+# Ignore frontend build (built separately)
+frontend/
+
+# Ignore docs and test files
+docs/
+node_modules/
+spec/
+features/
