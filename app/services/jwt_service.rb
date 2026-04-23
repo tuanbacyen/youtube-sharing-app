@@ -2,11 +2,8 @@ class JwtService
   ALGORITHM = "HS256"
 
   def self.encode(payload)
-    payload = payload.merge(
-      jti: SecureRandom.uuid,
-      exp: 24.hours.from_now.to_i
-    )
-    JWT.encode(payload, secret, ALGORITHM)
+    defaults = { jti: SecureRandom.uuid, exp: 24.hours.from_now.to_i }
+    JWT.encode(defaults.merge(payload), secret, ALGORITHM)
   end
 
   def self.decode(token)

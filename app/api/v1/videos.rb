@@ -3,17 +3,8 @@ module V1
     resource :videos do
       desc "List all videos, newest first"
       get do
-        Video.includes(:user).order(created_at: :desc).map do |video|
-          {
-            id: video.id,
-            youtube_url: video.youtube_url,
-            youtube_id: video.youtube_id,
-            title: video.title,
-            description: video.description,
-            shared_by: video.user.email,
-            created_at: video.created_at
-          }
-        end
+        videos = Video.includes(:user).order(created_at: :desc)
+        present videos, with: V1::Entities::Video
       end
 
       desc "Share a YouTube video"
@@ -36,15 +27,7 @@ module V1
         if video.save
           VideoShareNotificationJob.perform_later(video.id)
           status :created
-          {
-            id: video.id,
-            youtube_url: video.youtube_url,
-            youtube_id: video.youtube_id,
-            title: video.title,
-            description: video.description,
-            shared_by: current_user.email,
-            created_at: video.created_at
-          }
+          present video, with: V1::Entities::Video
         else
           error!(video.errors.full_messages.join(", "), 422)
         end
