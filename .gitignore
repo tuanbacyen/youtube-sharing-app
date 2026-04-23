@@ -39,3 +39,8 @@
 # Frontend
 frontend/node_modules/
 frontend/dist/
+frontend/.next/
+
+# Built frontend assets copied into public/ (FE is now a separate server)
+/public/assets/
+/public/index.html

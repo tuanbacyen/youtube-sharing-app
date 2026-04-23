@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Pull images and build all Docker services.
+set -e
+echo "==> Building Docker images..."
+docker compose build --pull
+echo "==> Done. Run 'bin/dev' to start services."
