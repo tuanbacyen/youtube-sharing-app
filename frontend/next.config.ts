@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   turbopack: { root: __dirname },
   async rewrites() {
     const beUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3969'
+    console.log('[rewrites] API_URL=', process.env.API_URL, 'NEXT_PUBLIC_API_URL=', process.env.NEXT_PUBLIC_API_URL, '=> beUrl=', beUrl)
     return [
       { source: '/api/:path*', destination: `${beUrl}/api/:path*` },
       { source: '/cable',      destination: `${beUrl}/cable` },
