@@ -11,9 +11,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const apiUrl = process.env.API_URL || 'http://localhost:3969'
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <script dangerouslySetInnerHTML={{ __html: `window.__API_URL__=${JSON.stringify(apiUrl)}` }} />
+        {children}
+      </body>
     </html>
   );
 }
