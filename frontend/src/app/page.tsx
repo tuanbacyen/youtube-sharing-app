@@ -19,10 +19,9 @@ export default function Home() {
   }, [])
 
   const onNotification = useCallback((data: any) => {
-    setNotification(data)
-    // Prepend only if not already in the list (sharer also receives own broadcast).
+    if (data?.shared_by && data.shared_by !== (user as any)?.email) setNotification(data)
     if (data?.id) setVideos(prev => prev.some(v => v.id === data.id) ? prev : [data, ...prev])
-  }, [])
+  }, [user])
   useActionCable(user, onNotification)
 
   const handleLogin = async (email: string, password: string) => {
@@ -44,7 +43,7 @@ export default function Home() {
       {showShareModal && (
         <ShareModal
           onClose={() => setShowShareModal(false)}
-          onSuccess={(video: any) => { setVideos((prev: any[]) => [video, ...prev]); setShowShareModal(false) }}
+          onSuccess={(video: any) => { setVideos((prev: any[]) => prev.some(v => v.id === video.id) ? prev : [video, ...prev]); setShowShareModal(false) }}
         />
       )}
       {notification && (
