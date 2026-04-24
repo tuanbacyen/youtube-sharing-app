@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server'
 
-const BE_URL = process.env.API_URL || 'http://localhost:3969'
+const BE_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3969'
 
 async function proxy(request: NextRequest, params: Promise<{ path: string[] }>) {
   const { path } = await params
