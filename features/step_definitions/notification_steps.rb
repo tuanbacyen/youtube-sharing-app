@@ -9,6 +9,9 @@ Given('{string} is logged in on the main session') do |email|
     fill_in 'password', with: 'password123'
     click_button 'Login / Register'
     expect(page).to have_content("Welcome #{email}")
+    # Give the ActionCable WebSocket connection time to establish before
+    # another session triggers a notification.
+    sleep 3
   end
 end
 
@@ -27,11 +30,13 @@ When('{string} shares {string} on the secondary session') do |_email, url|
     click_button 'Share a movie'
     fill_in 'Youtube URL', with: url
     click_button 'Share'
+    # Wait for modal to close — confirms the API call completed and job was enqueued.
+    expect(page).not_to have_css('fieldset', wait: 10)
   end
 end
 
 Then('{string} should see a notification on the main session') do |_email|
   Capybara.using_session(:main) do
-    expect(page).to have_css('[data-testid="notification-toast"]', wait: 10)
+    expect(page).to have_css('[data-testid="notification-toast"]', wait: 15)
   end
 end

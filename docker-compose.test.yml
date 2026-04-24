@@ -1,14 +1,25 @@
-# Test environment overrides — used by bin/cucumber_test.
+# Test environment overrides — used by bin/cucumber_start and bin/cucumber_test.
 # Runs in RAILS_ENV=test with a separate test database.
+# Ports are offset from dev (3669/3100 vs 3969/3001) so dev and test can coexist.
 # ActionCable uses Redis so WebSocket notifications work across Docker processes.
 services:
+  db:
+    ports:
+      - '5433:5432'
+
+  redis:
+    ports:
+      - '6380:6379'
+
   backend:
+    ports:
+      - '3669:3969'
     environment:
       DATABASE_URL: postgres://postgres:password@db:5432/remitano_interview_test
       REDIS_URL: redis://redis:6379/0
       RAILS_ENV: test
       JWT_SECRET: testsecret
-      FRONTEND_URL: http://localhost:3001
+      FRONTEND_URL: http://localhost:3100
       ACTION_CABLE_ADAPTER: redis
 
   sidekiq:
@@ -18,3 +29,12 @@ services:
       RAILS_ENV: test
       JWT_SECRET: testsecret
       ACTION_CABLE_ADAPTER: redis
+
+  frontend:
+    ports:
+      - '3100:3100'
+    environment:
+      # Browser WebSocket must use the host port (3669) since Docker hostnames
+      # are not resolvable by the browser / Capybara's Chrome.
+      NEXT_PUBLIC_WS_URL: ws://localhost:3669
+      PORT: 3100

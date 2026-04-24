@@ -1,50 +1,18 @@
 #!/usr/bin/env bash
-# Run Cucumber integration tests in an isolated Docker test environment.
-# Starts its own stack (db, redis, backend, sidekiq, frontend) in RAILS_ENV=test,
-# runs tests, then tears everything down.
+# Run Cucumber tests against the running test Docker environment.
+# Requires bin/cucumber_start to have been run first.
 #
 # Usage:
-#   bin/cucumber_test                     # run all features
-#   bin/cucumber_test features/auth.feature
+#   bin/cucumber_test                            # run all features
+#   bin/cucumber_test features/notifications.feature
+#   bin/cucumber_test features/auth.feature features/share_video.feature
 set -e
 export COMPOSE_PROJECT_NAME=remitano-interview-test
 
-COMPOSE="docker compose -f docker-compose.yml -f docker-compose.test.yml"
-BE_URL="http://localhost:3969"
-FE_URL="http://localhost:3001"
-TEST_DB_URL="postgres://postgres:password@localhost:5432/remitano_interview_test"
+FE_URL="http://localhost:3100"
+TEST_DB_URL="postgres://postgres:password@localhost:5433/remitano_interview_test"
 
-log()  { echo "==> $*"; }
-fail() { echo "ERROR: $*" >&2; exit 1; }
-
-wait_for() {
-  local name=$1 url=$2 tries=${3:-20}
-  log "Waiting for $name at $url..."
-  for i in $(seq 1 $tries); do
-    curl -sf --max-time 3 "$url" -o /dev/null 2>/dev/null && return 0
-    sleep 3
-  done
-  fail "$name did not become ready at $url"
-}
-
-# Tear down any leftover test containers from a previous run
-$COMPOSE down --remove-orphans 2>/dev/null || true
-
-log "Starting test Docker environment..."
-$COMPOSE up -d db redis
-sleep 4
-
-log "Preparing test database..."
-$COMPOSE run --rm \
-  -e RAILS_ENV=test \
-  -e DATABASE_URL="$TEST_DB_URL" \
-  backend bundle exec rails db:prepare
-
-log "Starting backend, sidekiq, frontend..."
-$COMPOSE up -d backend sidekiq frontend
-
-wait_for "Backend"  "$BE_URL/api/v1/videos" 20
-wait_for "Frontend" "$FE_URL"               60   # Next.js first compile ~2min
+log() { echo "==> $*"; }
 
 log "Running Cucumber tests..."
 set +e
@@ -54,8 +22,5 @@ RAILS_ENV=test \
   bundle exec cucumber "$@"
 EXIT_CODE=$?
 set -e
-
-log "Tearing down test Docker environment..."
-$COMPOSE down --remove-orphans
 
 exit $EXIT_CODE

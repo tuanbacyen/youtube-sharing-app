@@ -39,7 +39,7 @@ group :test do
   gem 'factory_bot_rails'
   gem 'rspec-json_expectations'
   gem 'rspec-rails'
-  gem 'rspec-sidekiq'
+  gem 'rspec-sidekiq', require: false  # prevent auto-require from faking Sidekiq in Cucumber
   gem 'shoulda-matchers'
 
   # JUnit XML for test timing analysis

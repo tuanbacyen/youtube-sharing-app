@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Stop all running Docker environments (dev and test).
+# By default keeps volumes so dev database data is preserved.
+#
+# Usage:
+#   bin/stop            # stop dev + test, keep volumes
+#   bin/stop --volumes  # stop dev + test and remove all volumes (full reset)
+set -e
+
+REMOVE_VOLUMES=false
+for arg in "$@"; do
+  [[ "$arg" == "--volumes" ]] && REMOVE_VOLUMES=true
+done
+
+DOWN_FLAGS="--remove-orphans"
+$REMOVE_VOLUMES && DOWN_FLAGS="--volumes --remove-orphans"
+
+log() { echo "==> $*"; }
+
+log "Stopping dev environment (remitano-interview-dev)..."
+COMPOSE_PROJECT_NAME=remitano-interview-dev \
+  docker compose down $DOWN_FLAGS 2>/dev/null || true
+
+log "Stopping test environment (remitano-interview-test)..."
+COMPOSE_PROJECT_NAME=remitano-interview-test \
+  docker compose -f docker-compose.yml -f docker-compose.test.yml down $DOWN_FLAGS 2>/dev/null || true
+
+if $REMOVE_VOLUMES; then
+  log "All environments stopped and volumes removed."
+else
+  log "All environments stopped. Run 'bin/stop --volumes' to also remove volumes."
+fi

@@ -31,6 +31,9 @@ Rails.application.configure do
 
   # Disable request forgery protection in test environment.
   config.action_controller.allow_forgery_protection = false
+  # Allow cross-origin WebSocket connections in test (Capybara browser connects
+  # to ws://localhost:3669 while serving pages from http://localhost:3100).
+  config.action_cable.disable_request_forgery_protection = true
 
   # Print deprecation notices to the stderr.
   config.active_support.deprecation = :stderr
