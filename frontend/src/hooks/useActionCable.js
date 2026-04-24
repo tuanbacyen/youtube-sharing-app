@@ -13,9 +13,8 @@ export function useActionCable(user, onNotification) {
       return
     }
 
-    const token  = localStorage.getItem('token')
-    const apiUrl = window.__API_URL__ || 'http://localhost:3969'
-    const wsUrl  = apiUrl.replace(/^http/, 'ws')
+    const token = localStorage.getItem('token')
+    const wsUrl = window.__WS_URL__ || 'ws://localhost:3969'
     consumerRef.current = createConsumer(`${wsUrl}/cable?token=${token}`)
     consumerRef.current.subscriptions.create(
       { channel: 'NotificationsChannel' },
