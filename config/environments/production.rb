@@ -41,7 +41,10 @@ Rails.application.configure do
   config.active_support.report_deprecations = false
 
   # Use Redis as cache store (solid_cache not used — single DB on Railway).
-  config.cache_store = :redis_cache_store, { url: ENV.fetch("REDIS_URL") }
+  config.cache_store = :redis_cache_store, {
+    url: ENV.fetch("REDIS_URL"),
+    ssl_params: { verify_mode: OpenSSL::SSL::VERIFY_NONE }
+  }
 
   # Use Sidekiq for background jobs.
   config.active_job.queue_adapter = :sidekiq
@@ -56,12 +59,12 @@ Rails.application.configure do
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
-  # Enable DNS rebinding protection and other `Host` header attacks.
-  # config.hosts = [
-  #   "example.com",     # Allow requests from example.com
-  #   /.*\.example\.com/ # Allow requests from subdomains like `www.example.com`
-  # ]
-  #
-  # Skip DNS rebinding protection for the default health check endpoint.
-  # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+  # Allow Railway domain and any custom domains.
+  config.hosts = [
+    /.*\.railway\.app/,
+    ENV.fetch("FRONTEND_URL", nil)&.then { |u| URI.parse(u).host },
+    ENV.fetch("ALLOWED_HOST", nil)
+  ].compact
+
+  config.host_authorization = { exclude: ->(request) { request.path == "/up" || request.path.start_with?("/api/") } }
 end
