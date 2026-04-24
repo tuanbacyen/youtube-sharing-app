@@ -12,18 +12,5 @@ test:
   url: <%= ENV.fetch("DATABASE_URL", "postgres://postgres:password@localhost:5432/remitano_interview_test") %>
 
 production:
-  primary: &primary_production
-    <<: *default
-    url: <%= ENV["DATABASE_URL"] %>
-  cache:
-    <<: *primary_production
-    database: remitano_interview_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: remitano_interview_queue
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: remitano_interview_cable
-    migrations_paths: db/cable_migrate
+  <<: *default
+  url: <%= ENV["DATABASE_URL"] %>
