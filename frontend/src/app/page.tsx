@@ -20,8 +20,8 @@ export default function Home() {
 
   const onNotification = useCallback((data: any) => {
     setNotification(data)
-    // Prepend the new video to the list so other users see it immediately.
-    if (data?.id) setVideos(prev => [data, ...prev])
+    // Prepend only if not already in the list (sharer also receives own broadcast).
+    if (data?.id) setVideos(prev => prev.some(v => v.id === data.id) ? prev : [data, ...prev])
   }, [])
   useActionCable(user, onNotification)
 
