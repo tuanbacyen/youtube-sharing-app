@@ -15,6 +15,21 @@ A fullstack web app for sharing YouTube videos with real-time notifications.
 
 ---
 
+## Prerequisites
+
+| Tool       | Version  |
+| ---------- | -------- |
+| Docker     | 24+      |
+| Docker Compose | v2+  |
+| Ruby       | 3.3+     |
+| Node.js    | 20+      |
+| PostgreSQL | 16+ (if running without Docker) |
+| Redis      | 7+ (if running without Docker)  |
+
+> **Easiest path:** just install Docker — all other dependencies run inside containers.
+
+---
+
 ## Quick Start (Docker)
 
 ```bash
@@ -99,12 +114,15 @@ Screenshots of failing scenarios → `tmp/screenshots/`
 
 ## Deployment (Railway)
 
-Two separate Railway services:
+Three Railway services deploy from this single repo.  
+**Recommended builder:** Dockerfile for BE/Worker, Nixpacks for FE.
 
-### Backend service
+### 1 — Backend service (web)
 
 ```
-Start command: bundle exec puma -C config/puma.rb
+Root directory: /          (repo root)
+Builder:        Dockerfile
+Start command:  bundle exec puma -C config/puma.rb
 ```
 
 | ENV var            | Description                      |
@@ -113,13 +131,17 @@ Start command: bundle exec puma -C config/puma.rb
 | `REDIS_URL`        | Set by Railway Redis add-on      |
 | `JWT_SECRET`       | Random secret string             |
 | `RAILS_MASTER_KEY` | Contents of `config/master.key`  |
-| `FRONTEND_URL`     | FE Railway URL (for CORS)        |
+| `FRONTEND_URL`     | FE Railway public URL (for CORS + ActionCable allowed origins) |
 
-### Worker service (same Docker image as BE)
+### 2 — Worker service (same Dockerfile as BE)
 
 ```
-Start command: bundle exec sidekiq
+Root directory: /          (repo root)
+Builder:        Dockerfile
+Start command:  bundle exec sidekiq   ← set in Railway UI, not railway.toml
 ```
+
+> **Important:** The worker's start command must be set in the Railway service **Settings → Deploy → Start Command** in the UI. It is not in `railway.toml` so that it doesn't override the web service.
 
 | ENV var            | Description |
 | ------------------ | ----------- |
@@ -128,17 +150,34 @@ Start command: bundle exec sidekiq
 | `JWT_SECRET`       | Same as BE  |
 | `RAILS_MASTER_KEY` | Same as BE  |
 
-### Frontend service (Next.js)
+### 3 — Frontend service (Next.js)
 
 ```
-Start command: npm start
-Build command: npm run build
+Root directory: /frontend
+Builder:        Nixpacks
+Start command:  npm start
 ```
 
-| ENV var               | Description                                             |
-| --------------------- | ------------------------------------------------------- |
-| `NEXT_PUBLIC_API_URL` | BE Railway URL (e.g. `https://myapp-be.up.railway.app`) |
-| `NEXT_PUBLIC_WS_URL`  | WebSocket URL (e.g. `wss://myapp-be.up.railway.app`)    |
+Railway automatically sets `PORT=8080`. Make sure the service **Networking → Public domain** maps to port **8080**.
+
+| ENV var    | Description                                                           |
+| ---------- | --------------------------------------------------------------------- |
+| `API_URL`  | BE Railway **private** URL — used server-side by the API proxy route  |
+| `WS_URL`   | BE WebSocket URL (e.g. `wss://myapp-be.up.railway.app`)               |
+
+> **How env vars flow at runtime:**  
+> - `API_URL` is read server-side by the Next.js Route Handler (`/api/[...path]`) to proxy all REST calls — never exposed to the browser.  
+> - `WS_URL` is read by the Next.js Server Component (`layout.tsx`) at render time and injected as `window.__WS_URL__` so the browser can open a WebSocket directly to the BE.  
+> - No `NEXT_PUBLIC_*` vars are needed for a production Railway deployment.
+
+### Watch Paths (optional — prevent unnecessary redeploys)
+
+Configure per service in **Railway UI → Settings → Deploy → Watch Paths**:
+
+| Service  | Watch paths                  |
+| -------- | ---------------------------- |
+| BE / Worker | `Dockerfile`, `Gemfile*`, `app/**`, `config/**`, `db/**`, `lib/**` |
+| Frontend | `frontend/**`                |
 
 ---
 
@@ -146,9 +185,11 @@ Build command: npm run build
 
 ```
 Browser
-  └── Next.js FE (port 3001 / Railway)
-        ├── REST  → Rails BE (port 3969 / Railway)  → PostgreSQL
-        └── WS    → ActionCable (Rails BE)
+  └── Next.js FE (local: 3001 / Railway: 8080)
+        ├── /api/* → Next.js Route Handler (server-side proxy)
+        │               └── Rails BE (local: 3969 / Railway)  → PostgreSQL
+        └── WebSocket (window.__WS_URL__)
+                └── ActionCable / Rails BE
                         └── Sidekiq ← Redis
 ```
 
