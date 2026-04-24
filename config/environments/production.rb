@@ -67,4 +67,10 @@ Rails.application.configure do
   ].compact
 
   config.host_authorization = { exclude: ->(request) { request.path == "/up" || request.path.start_with?("/api/") } }
+
+  # Allow WebSocket connections from any Railway subdomain or configured frontend URL.
+  config.action_cable.allowed_request_origins = [
+    /https?:\/\/.*\.railway\.app/,
+    ENV.fetch("FRONTEND_URL", nil)
+  ].compact
 end
