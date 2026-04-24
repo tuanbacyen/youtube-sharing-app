@@ -7,7 +7,7 @@ export COMPOSE_PROJECT_NAME=remitano-interview-dev
 
 BACKGROUND=false
 for arg in "$@"; do
-  [[ "$arg" == "--background" ]] && BACKGROUND=true
+  [[ "$arg" == "--background" || "$arg" == "-d" ]] && BACKGROUND=true
 done
 
 echo "==> Starting db and redis..."

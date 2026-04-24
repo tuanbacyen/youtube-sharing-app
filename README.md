@@ -4,12 +4,12 @@
 
 A fullstack web app for sharing YouTube videos with real-time notifications.
 
-| Layer | Stack |
-|---|---|
-| Backend (BE) | Ruby on Rails 8 · Grape API · ActionCable · Sidekiq |
-| Frontend (FE) | Next.js (separate service) |
-| Queue | Sidekiq + Redis |
-| Database | PostgreSQL |
+| Layer         | Stack                                               |
+| ------------- | --------------------------------------------------- |
+| Backend (BE)  | Ruby on Rails 8 · Grape API · ActionCable · Sidekiq |
+| Frontend (FE) | Next.js (separate service)                          |
+| Queue         | Sidekiq + Redis                                     |
+| Database      | PostgreSQL                                          |
 
 **Features:** User registration/login · Share YouTube videos · Real-time WebSocket notifications
 
@@ -35,17 +35,17 @@ bin/stop --volumes # stop everything and wipe all data
 
 ## All Commands
 
-| Command | Description |
-|---|---|
-| `bin/install` | Build Docker images (first-time setup) |
-| `bin/dev` | Start all services in foreground (db, redis, BE, Sidekiq, FE) |
-| `bin/dev --background` | Same as above but detached (no log output) |
-| `bin/stop` | Stop dev + test environments, keep volumes |
-| `bin/stop --volumes` | Stop dev + test environments and remove all volumes |
-| `bin/unit_test` | Run RSpec unit/request tests inside Docker |
-| `bin/cucumber_start` | Start (or reset) isolated Docker test environment |
-| `bin/cucumber_test` | Run all Cucumber integration tests against the test environment |
-| `bin/cucumber_test <file>` | Run a specific feature file, e.g. `features/notifications.feature` |
+| Command                                | Description                                                        |
+| -------------------------------------- | ------------------------------------------------------------------ |
+| `bin/install`                          | Build Docker images (first-time setup)                             |
+| `bin/dev`                              | Start all services in foreground (db, redis, BE, Sidekiq, FE)      |
+| `bin/dev --background` or `bin/dev -d` | Same as above but detached (no log output)                         |
+| `bin/stop`                             | Stop dev + test environments, keep volumes                         |
+| `bin/stop --volumes`                   | Stop dev + test environments and remove all volumes                |
+| `bin/unit_test`                        | Run RSpec unit/request tests inside Docker                         |
+| `bin/cucumber_start`                   | Start (or reset) isolated Docker test environment                  |
+| `bin/cucumber_test`                    | Run all Cucumber integration tests against the test environment    |
+| `bin/cucumber_test <file>`             | Run a specific feature file, e.g. `features/notifications.feature` |
 
 ---
 
@@ -102,40 +102,43 @@ Screenshots of failing scenarios → `tmp/screenshots/`
 Two separate Railway services:
 
 ### Backend service
+
 ```
 Start command: bundle exec puma -C config/puma.rb
 ```
 
-| ENV var | Description |
-|---|---|
-| `DATABASE_URL` | Set by Railway PostgreSQL add-on |
-| `REDIS_URL` | Set by Railway Redis add-on |
-| `JWT_SECRET` | Random secret string |
-| `RAILS_MASTER_KEY` | Contents of `config/master.key` |
-| `FRONTEND_URL` | FE Railway URL (for CORS) |
+| ENV var            | Description                      |
+| ------------------ | -------------------------------- |
+| `DATABASE_URL`     | Set by Railway PostgreSQL add-on |
+| `REDIS_URL`        | Set by Railway Redis add-on      |
+| `JWT_SECRET`       | Random secret string             |
+| `RAILS_MASTER_KEY` | Contents of `config/master.key`  |
+| `FRONTEND_URL`     | FE Railway URL (for CORS)        |
 
 ### Worker service (same Docker image as BE)
+
 ```
 Start command: bundle exec sidekiq
 ```
 
-| ENV var | Description |
-|---|---|
-| `DATABASE_URL` | Same as BE |
-| `REDIS_URL` | Same as BE |
-| `JWT_SECRET` | Same as BE |
-| `RAILS_MASTER_KEY` | Same as BE |
+| ENV var            | Description |
+| ------------------ | ----------- |
+| `DATABASE_URL`     | Same as BE  |
+| `REDIS_URL`        | Same as BE  |
+| `JWT_SECRET`       | Same as BE  |
+| `RAILS_MASTER_KEY` | Same as BE  |
 
 ### Frontend service (Next.js)
+
 ```
 Start command: npm start
 Build command: npm run build
 ```
 
-| ENV var | Description |
-|---|---|
+| ENV var               | Description                                             |
+| --------------------- | ------------------------------------------------------- |
 | `NEXT_PUBLIC_API_URL` | BE Railway URL (e.g. `https://myapp-be.up.railway.app`) |
-| `NEXT_PUBLIC_WS_URL` | WebSocket URL (e.g. `wss://myapp-be.up.railway.app`) |
+| `NEXT_PUBLIC_WS_URL`  | WebSocket URL (e.g. `wss://myapp-be.up.railway.app`)    |
 
 ---
 
@@ -161,11 +164,11 @@ Browser
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---|---|
-| Database connection error | Check `DATABASE_URL`, ensure PostgreSQL is running |
-| Redis / WebSocket error | Check `REDIS_URL`, ensure Redis + Sidekiq are running |
-| No real-time notifications | Sidekiq not running or `REDIS_URL` wrong |
-| CORS errors on FE | Set `FRONTEND_URL` on BE to match FE origin |
-| Cucumber tests fail | Run `bin/cucumber_start` first, then `bin/cucumber_test` |
-| Port conflicts | Dev uses 3969/3001, test uses 3669/3100 — they can run simultaneously |
+| Problem                    | Solution                                                              |
+| -------------------------- | --------------------------------------------------------------------- |
+| Database connection error  | Check `DATABASE_URL`, ensure PostgreSQL is running                    |
+| Redis / WebSocket error    | Check `REDIS_URL`, ensure Redis + Sidekiq are running                 |
+| No real-time notifications | Sidekiq not running or `REDIS_URL` wrong                              |
+| CORS errors on FE          | Set `FRONTEND_URL` on BE to match FE origin                           |
+| Cucumber tests fail        | Run `bin/cucumber_start` first, then `bin/cucumber_test`              |
+| Port conflicts             | Dev uses 3969/3001, test uses 3669/3100 — they can run simultaneously |
