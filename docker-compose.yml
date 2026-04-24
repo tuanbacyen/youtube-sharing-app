@@ -72,9 +72,9 @@ services:
     ports:
       - '3001:3001'
     environment:
-      NEXT_PUBLIC_API_URL: http://backend:3969
-      # Browser can't resolve Docker hostnames — WS must use localhost (host port).
-      NEXT_PUBLIC_WS_URL: ws://localhost:3969
+      API_URL: http://backend:3969
+      NEXT_PUBLIC_API_URL: http://localhost:3969
+      WS_URL: ws://localhost:3969
       PORT: 3001
     depends_on:
       - backend
