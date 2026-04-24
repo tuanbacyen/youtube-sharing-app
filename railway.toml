@@ -5,4 +5,3 @@ dockerfilePath = "Dockerfile"
 [deploy]
 startCommand = "bundle exec puma -C config/puma.rb"
 restartPolicyType = "on_failure"
-watchPatterns = ["**", "!frontend/**", "!**/*.md"]

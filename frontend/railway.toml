@@ -5,4 +5,3 @@ builder = "nixpacks"
 startCommand = "npm start"
 healthcheckPath = "/"
 restartPolicyType = "on_failure"
-watchPatterns = ["frontend/**"]
