@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Start (or reset) the isolated Docker test environment for Cucumber tests.
+# Tears down any existing test stack, starts fresh, and waits until ready.
+#
+# Usage:
+#   bin/cucumber_start
+#
+# After this completes, run tests with:
+#   bin/cucumber_test [features/some.feature]
+set -e
+export COMPOSE_PROJECT_NAME=remitano-interview-test
+
+COMPOSE="docker compose -f docker-compose.yml -f docker-compose.test.yml"
+BE_URL="http://localhost:3669"
+FE_URL="http://localhost:3100"
+
+log()  { echo "==> $*"; }
+fail() { echo "ERROR: $*" >&2; exit 1; }
+
+wait_for() {
+  local name=$1 url=$2 tries=${3:-20}
+  log "Waiting for $name at $url..."
+  for i in $(seq 1 $tries); do
+    curl -sf --max-time 3 "$url" -o /dev/null 2>/dev/null && return 0
+    sleep 3
+  done
+  fail "$name did not become ready at $url"
+}
+
+log "Tearing down any previous test environment..."
+$COMPOSE down --volumes --remove-orphans 2>/dev/null || true
+
+log "Starting db and redis..."
+$COMPOSE up -d db redis
+sleep 4
+
+log "Preparing test database..."
+$COMPOSE run --rm backend bundle exec rails db:prepare
+
+log "Starting backend, sidekiq, frontend..."
+$COMPOSE up -d backend sidekiq frontend
+
+wait_for "Backend"  "$BE_URL/api/v1/videos" 20
+wait_for "Frontend" "$FE_URL"               60   # Next.js first compile ~2min
+
+log "Test environment is ready."
+log "  Backend:  $BE_URL"
+log "  Frontend: $FE_URL"
+log ""
+log "Run tests with:  bin/cucumber_test [features/some.feature]"
+log "Reset env with:  bin/cucumber_start"
+log "Stop env with:   docker compose -f docker-compose.yml -f docker-compose.test.yml down --volumes"

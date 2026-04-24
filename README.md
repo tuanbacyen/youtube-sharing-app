@@ -18,11 +18,18 @@ A fullstack web app for sharing YouTube videos with real-time notifications.
 ## Quick Start (Docker)
 
 ```bash
-bin/install    # build Docker images
+bin/install    # build Docker images (first-time setup)
 bin/dev        # start all services + run migrations
 ```
 
 Open http://localhost:3001 (FE) · http://localhost:3969 (BE API)
+
+When done:
+
+```bash
+bin/stop           # stop everything, keep data
+bin/stop --volumes # stop everything and wipe all data
+```
 
 ---
 
@@ -31,9 +38,14 @@ Open http://localhost:3001 (FE) · http://localhost:3969 (BE API)
 | Command | Description |
 |---|---|
 | `bin/install` | Build Docker images (first-time setup) |
-| `bin/dev` | Start all services in Docker (db, redis, BE, worker, FE) + migrate |
+| `bin/dev` | Start all services in foreground (db, redis, BE, Sidekiq, FE) |
+| `bin/dev --background` | Same as above but detached (no log output) |
+| `bin/stop` | Stop dev + test environments, keep volumes |
+| `bin/stop --volumes` | Stop dev + test environments and remove all volumes |
 | `bin/unit_test` | Run RSpec unit/request tests inside Docker |
-| `bin/cucumber_test` | Run Cucumber integration tests against running FE + BE |
+| `bin/cucumber_start` | Start (or reset) isolated Docker test environment |
+| `bin/cucumber_test` | Run all Cucumber integration tests against the test environment |
+| `bin/cucumber_test <file>` | Run a specific feature file, e.g. `features/notifications.feature` |
 
 ---
 
@@ -67,12 +79,18 @@ bundle exec rspec
 
 ### Integration tests (Cucumber)
 
-Requires BE (port 3969) + FE (port 3001) + Sidekiq to be running.
+The test environment runs in its **own isolated Docker stack** on separate ports
+(BE: 3669, FE: 3100) so it never conflicts with a running dev environment.
 
 ```bash
+# Step 1 — start (or reset) the test environment
+bin/cucumber_start
+
+# Step 2 — run all tests (or a specific feature)
 bin/cucumber_test
-# or manually:
-RAILS_ENV=test FE_URL=http://localhost:3001 bundle exec cucumber
+bin/cucumber_test features/notifications.feature
+
+# To reset the environment between runs, just call bin/cucumber_start again.
 ```
 
 Screenshots of failing scenarios → `tmp/screenshots/`
@@ -117,7 +135,7 @@ Build command: npm run build
 | ENV var | Description |
 |---|---|
 | `NEXT_PUBLIC_API_URL` | BE Railway URL (e.g. `https://myapp-be.up.railway.app`) |
-| `NEXT_PUBLIC_WS_URL` | WebSocket URL (e.g. `wss://myapp-be.up.railway.app/cable`) |
+| `NEXT_PUBLIC_WS_URL` | WebSocket URL (e.g. `wss://myapp-be.up.railway.app`) |
 
 ---
 
@@ -149,4 +167,5 @@ Browser
 | Redis / WebSocket error | Check `REDIS_URL`, ensure Redis + Sidekiq are running |
 | No real-time notifications | Sidekiq not running or `REDIS_URL` wrong |
 | CORS errors on FE | Set `FRONTEND_URL` on BE to match FE origin |
-| Cucumber tests fail | Ensure BE + FE + Sidekiq are running, then `bin/cucumber_test` |
+| Cucumber tests fail | Run `bin/cucumber_start` first, then `bin/cucumber_test` |
+| Port conflicts | Dev uses 3969/3001, test uses 3669/3100 — they can run simultaneously |
