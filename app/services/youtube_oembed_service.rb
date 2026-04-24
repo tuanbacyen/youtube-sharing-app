@@ -4,7 +4,7 @@ require "cgi"
 
 class YoutubeOembedService
   OEMBED_URL = "https://www.youtube.com/oembed"
-  YOUTUBE_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  YOUTUBE_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/
 
   def self.extract_id(url)
     url.to_s.match(YOUTUBE_REGEX)&.captures&.first

@@ -10,6 +10,10 @@ RSpec.describe YoutubeOembedService do
       expect(YoutubeOembedService.extract_id('https://youtu.be/dQw4w9WgXcQ')).to eq('dQw4w9WgXcQ')
     end
 
+    it 'extracts id from Shorts URL' do
+      expect(YoutubeOembedService.extract_id('https://www.youtube.com/shorts/dQw4w9WgXcQ')).to eq('dQw4w9WgXcQ')
+    end
+
     it 'returns nil for non-YouTube URL' do
       expect(YoutubeOembedService.extract_id('https://vimeo.com/123')).to be_nil
     end
