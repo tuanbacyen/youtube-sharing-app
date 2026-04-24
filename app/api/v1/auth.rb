@@ -13,7 +13,7 @@ module V1
           status :created
           { token: token, email: user.email }
         else
-          error!(user.errors.full_messages.join(', '), 422)
+          error!(user.errors.full_messages.join(", "), 422)
         end
       end
 

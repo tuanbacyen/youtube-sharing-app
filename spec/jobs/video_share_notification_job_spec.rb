@@ -7,11 +7,13 @@ RSpec.describe VideoShareNotificationJob, type: :job do
   it 'broadcasts the correct payload to the notifications channel' do
     expect(ActionCable.server).to receive(:broadcast).with(
       'notifications',
-      {
-        type: 'new_video',
-        title: 'Test Video Title',
-        shared_by: 'sharer@example.com'
-      }
+      hash_including(
+        type:      'new_video',
+        title:     'Test Video Title',
+        shared_by: 'sharer@example.com',
+        id:        video.id,
+        youtube_id: video.youtube_id
+      )
     )
     described_class.perform_now(video.id)
   end

@@ -13,11 +13,11 @@ class YoutubeOembedService
   def self.fetch(youtube_url)
     uri = URI("#{OEMBED_URL}?url=#{CGI.escape(youtube_url)}&format=json")
     response = Net::HTTP.get_response(uri)
-    return nil unless response.is_a?(Net::HTTPSuccess)
+    return {} unless response.is_a?(Net::HTTPSuccess)
 
     data = JSON.parse(response.body)
     { title: data["title"], description: data["author_name"] }
   rescue StandardError
-    nil
+    {}
   end
 end

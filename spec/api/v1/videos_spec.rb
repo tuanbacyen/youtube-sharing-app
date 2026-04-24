@@ -49,13 +49,22 @@ RSpec.describe 'Videos API', type: :request do
         expect(body['shared_by']).to eq(user.email)
       end
 
-      it 'returns 422 when oEmbed cannot fetch the video' do
-        allow(YoutubeOembedService).to receive(:fetch).and_return(nil)
+      it 'returns 422 for invalid YouTube URL' do
         post '/api/v1/videos',
              params: { youtube_url: 'https://not-youtube.com' },
              headers: auth_headers,
              as: :json
         expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'saves video with empty title when oEmbed fails' do
+        allow(YoutubeOembedService).to receive(:fetch).and_return({})
+        post '/api/v1/videos',
+             params: { youtube_url: youtube_url },
+             headers: auth_headers,
+             as: :json
+        expect(response).to have_http_status(:created)
+        expect(JSON.parse(response.body)['title']).to be_nil
       end
     end
 

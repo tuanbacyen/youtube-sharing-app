@@ -14,18 +14,9 @@ module V1
       post do
         authenticate!
 
-        metadata = YoutubeOembedService.fetch(params[:youtube_url])
-        error!({ error: "Could not fetch YouTube video info. Check the URL." }, 422) unless metadata
-
-        video = current_user.videos.build(
-          youtube_url: params[:youtube_url],
-          youtube_id: YoutubeOembedService.extract_id(params[:youtube_url]),
-          title: metadata[:title],
-          description: metadata[:description]
-        )
+        video = current_user.videos.build(youtube_url: params[:youtube_url])
 
         if video.save
-          VideoShareNotificationJob.perform_later(video.id)
           status :created
           present video, with: V1::Entities::Video
         else

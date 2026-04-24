@@ -5,9 +5,9 @@ class VideoShareNotificationJob < ApplicationJob
   def perform(video_id)
     video = Video.includes(:user).find(video_id)
     ActionCable.server.broadcast(
-      'notifications',
+      "notifications",
       {
-        type:        'new_video',
+        type:        "new_video",
         id:          video.id,
         title:       video.title,
         description: video.description,

@@ -44,8 +44,8 @@ RSpec.describe YoutubeOembedService do
         stub_request(:get, /youtube\.com\/oembed/).to_return(status: 404)
       end
 
-      it 'returns nil' do
-        expect(YoutubeOembedService.fetch(url)).to be_nil
+      it 'returns empty hash' do
+        expect(YoutubeOembedService.fetch(url)).to eq({})
       end
     end
   end

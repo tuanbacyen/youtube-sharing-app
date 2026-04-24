@@ -1,8 +1,8 @@
 FactoryBot.define do
   factory :video do
+    sequence(:youtube_id) { |n| "dQw4w9WgXc#{n}" }
+    youtube_url { "https://www.youtube.com/watch?v=#{youtube_id}" }
     user
-    youtube_url { 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }
-    youtube_id { 'dQw4w9WgXcQ' }
     title { Faker::Lorem.sentence }
     description { Faker::Lorem.paragraph }
   end
