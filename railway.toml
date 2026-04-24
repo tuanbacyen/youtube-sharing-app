@@ -4,5 +4,4 @@ dockerfilePath = "Dockerfile"
 
 [deploy]
 startCommand = "bundle exec puma -C config/puma.rb"
-healthcheckPath = "/api/v1/videos"
 restartPolicyType = "on_failure"
