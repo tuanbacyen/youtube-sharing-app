@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = {
   title: "Funny Movies",
   description: "YouTube video sharing with real-time notifications",
