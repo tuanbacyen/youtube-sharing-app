@@ -12,7 +12,7 @@ gem "grape"
 gem "grape-entity"
 gem "jwt"
 gem "bcrypt", "~> 3.1"
-gem "sidekiq", "~> 7.0"
+gem "sidekiq", "~> 8.1"
 gem "redis", "~> 5.0"
 
 group :development, :test do
